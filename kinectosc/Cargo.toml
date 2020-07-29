@@ -1,0 +1,13 @@
+[package]
+name = "kinectosc"
+version = "0.1.0"
+authors = ["Hidekazu Kobayashi <kobahide789@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+#libk4a-sys = { path = "../libk4a-sys" }
+#libk4abt-sys = { path = "../libk4abt-sys" }
+k4a = { path = "../k4a" }
+ctrlc = "3"
