@@ -35,7 +35,7 @@ pub trait Message {
 
 pub struct PoseMessage {
     pub id: u32,
-    pub result: i32,
+    pub is_valid: bool,
     pub wfd_rotation: UnitQuaternion<f64>,
     pub wfd_translation: Translation3<f64>,
     pub position: Point3<f64>,
@@ -50,7 +50,7 @@ impl Message for PoseMessage {
         len += w.write_string(",iidddddddddddddd")?;
 
         len += w.write_int(self.id as i32)?;
-        len += w.write_int(self.result)?;
+        len += w.write_int(if self.is_valid { 1 } else { 0 })?;
 
         len += w.write_double(self.wfd_rotation.w)?;
         len += w.write_double(self.wfd_rotation.i)?;

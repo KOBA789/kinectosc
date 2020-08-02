@@ -15,6 +15,7 @@ mod calibration;
 mod conv;
 mod kinect;
 mod profile_provider;
+mod filter;
 
 fn main() {
     let is_running = Arc::new(AtomicBool::new(true));
@@ -39,6 +40,7 @@ fn main() {
         ..Default::default()
     };
     let kinect = kinect::Kinect::open_sensor(0, sensor_config, tracker_config).unwrap();
+    let mut filter = filter::KinectJointFilter::new(filter::SmoothParams::default());
     loop {
         if !is_running.load(Ordering::SeqCst) {
             break;
@@ -53,6 +55,8 @@ fn main() {
         let skeleton: k4a::Skeleton = frame
             .get_body_skeleton(0)
             .unwrap();
+        filter.update(&skeleton);
+        /*
         let pelvis: &k4a::Joint = &skeleton.joints[joint_id::K4ABT_JOINT_PELVIS as usize];
         let message = build_message_from_joint(&profile, pelvis, 0);
         osc_client.send(message).unwrap();
@@ -69,6 +73,23 @@ fn main() {
         let hand_right: &k4a::Joint = &skeleton.joints[joint_id::K4ABT_JOINT_HAND_RIGHT as usize];
         let message = build_message_from_joint(&profile, hand_right, 4);
         osc_client.send(message).unwrap();
+        */
+        let pelvis = &filter.joints[joint_id::K4ABT_JOINT_PELVIS as usize];
+        let message = build_message_from_filtered_joint(&profile, pelvis, 0);
+        osc_client.send(message).unwrap();
+        let ankle_left = &filter.joints[joint_id::K4ABT_JOINT_FOOT_LEFT as usize];
+        let message = build_message_from_filtered_joint(&profile, ankle_left, 1);
+        osc_client.send(message).unwrap();
+        let ankle_right = &filter.joints[joint_id::K4ABT_JOINT_FOOT_RIGHT as usize];
+        let message = build_message_from_filtered_joint(&profile, ankle_right, 2);
+        osc_client.send(message).unwrap();
+
+        let hand_left = &filter.joints[joint_id::K4ABT_JOINT_HAND_LEFT as usize];
+        let message = build_message_from_filtered_joint(&profile, hand_left, 3);
+        osc_client.send(message).unwrap();
+        let hand_right = &filter.joints[joint_id::K4ABT_JOINT_HAND_RIGHT as usize];
+        let message = build_message_from_filtered_joint(&profile, hand_right, 4);
+        osc_client.send(message).unwrap();
     }
 }
 
@@ -77,7 +98,7 @@ fn build_message_from_joint(profile: &profile_provider::ProfileProvider, joint: 
     let wfd_translation = profile.wfd_translation;
     osc::PoseMessage {
         id,
-        result: 200,
+        is_valid: joint.confidence_level.0 >= 2,
         wfd_rotation,
         wfd_translation,
         position: Point3::new(
@@ -91,5 +112,22 @@ fn build_message_from_joint(profile: &profile_provider::ProfileProvider, joint: 
             joint.orientation.y as f64,
             joint.orientation.z as f64,
         )),
+    }
+}
+
+fn build_message_from_filtered_joint(profile: &profile_provider::ProfileProvider, joint: &filter::FilteredJoint, id: u32) -> osc::PoseMessage {
+    let wfd_rotation = profile.wfd_rotation;
+    let wfd_translation = profile.wfd_translation;
+    osc::PoseMessage {
+        id,
+        is_valid: joint.frame_count > 1,
+        wfd_rotation,
+        wfd_translation,
+        position: Point3::new(
+            joint.predicted_position.x as f64 / 1000.0,
+            joint.predicted_position.y as f64 / 1000.0,
+            joint.predicted_position.z as f64 / 1000.0,
+        ),
+        orientation: joint.raw_orientation,
     }
 }
