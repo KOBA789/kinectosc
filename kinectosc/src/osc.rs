@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 
-use nalgebra::{Point3, Translation3, UnitQuaternion};
+use nalgebra::{Point3, Translation3, UnitQuaternion, Vector3};
 
 pub struct Client {
     socket: UdpSocket,
@@ -40,6 +40,7 @@ pub struct PoseMessage {
     pub wfd_translation: Translation3<f64>,
     pub position: Point3<f64>,
     pub orientation: UnitQuaternion<f64>,
+    pub velocity: Vector3<f64>,
 }
 
 impl Message for PoseMessage {
@@ -69,6 +70,10 @@ impl Message for PoseMessage {
         len += w.write_double(self.orientation.i)?;
         len += w.write_double(self.orientation.j)?;
         len += w.write_double(self.orientation.k)?;
+
+        len += w.write_double(self.velocity.x)?;
+        len += w.write_double(self.velocity.y)?;
+        len += w.write_double(self.velocity.z)?;
 
         Ok(len)
     }
