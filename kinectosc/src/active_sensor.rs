@@ -2,10 +2,37 @@ use k4a::{Playback, Capture, StreamError, RunningDevice, WaitError, Calibration}
 use std::time;
 use std::cell::Cell;
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Error {
     End,
     Timeout,
     Fatal,
+}
+
+impl From<k4a::Error> for Error {
+    fn from(k4a_err: k4a::Error) -> Self {
+        match k4a_err {
+            k4a::Error::Failed => Error::Fatal,
+        }
+    }
+}
+
+impl From<WaitError> for Error {
+    fn from(wait_err: WaitError) -> Self {
+        match wait_err {
+            WaitError::Timeout => Error::Timeout,
+            WaitError::Failed => Error::Fatal,
+        }
+    }
+}
+
+impl From<StreamError> for Error {
+    fn from(stream_err: StreamError) -> Self {
+        match stream_err {
+            StreamError::Failed => Error::Fatal,
+            StreamError::Eof => Error::End,
+        }    
+    }
 }
 
 pub trait ActiveSensor {
@@ -51,11 +78,7 @@ impl ActiveSensor for RealtimePlayback {
 
 impl ActiveSensor for Playback {
     fn get_capture(&self, _timeout: i32) -> Result<Capture, Error> {
-        match self.get_capture() {
-            Ok(capture) => Ok(capture),
-            Err(StreamError::Eof) => Err(Error::End),
-            Err(StreamError::Failed) => Err(Error::Fatal),
-        }
+        Ok(self.get_capture()?)
     }
     
     fn get_calibration(&self) -> Result<Calibration, k4a::Error> {
@@ -65,11 +88,7 @@ impl ActiveSensor for Playback {
 
 impl ActiveSensor for RunningDevice {
     fn get_capture(&self, timeout: i32) -> Result<Capture, Error> {
-        match self.get_capture(timeout) {
-            Ok(capture) => Ok(capture),
-            Err(WaitError::Timeout) => Err(Error::Timeout),
-            Err(WaitError::Failed) => Err(Error::Fatal),
-        }
+        Ok(self.get_capture(timeout)?)
     }
 
     fn get_calibration(&self) -> Result<Calibration, k4a::Error> {

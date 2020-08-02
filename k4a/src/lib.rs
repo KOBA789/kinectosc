@@ -10,7 +10,7 @@ mod tracker_configuration;
 mod playback;
 
 pub use body::{
-    Body, Float2, Float3, Joint, Quaternion, Skeleton,
+    Body, Float2, Float3, Joint, Quaternion, Skeleton, joint_id,
 };
 pub use calibration::Calibration;
 pub use capture::Capture;

@@ -3,4 +3,5 @@ members = [
     "libk4a-sys",
     "k4a",
     "kinectosc",
+    "calibrator",
 ]
