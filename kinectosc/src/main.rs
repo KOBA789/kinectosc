@@ -25,6 +25,7 @@ fn main() {
     let mut osc_client = osc::Client::new("0.0.0.0:9010", target_addr).unwrap();
 
     let sensor_config = k4a::DeviceConfiguration {
+        //depth_mode: k4a::DepthMode::K4A_DEPTH_MODE_WFOV_2X2BINNED,
         depth_mode: k4a::DepthMode::K4A_DEPTH_MODE_NFOV_UNBINNED,
         ..Default::default()
     };
@@ -43,6 +44,11 @@ fn main() {
         let frame = kinect.next_frame().unwrap();
         let num_bodies = frame.get_num_bodies();
         if num_bodies == 0 {
+            osc_client.send(osc::NoBodyMessage { id: 0 }).unwrap();
+            osc_client.send(osc::NoBodyMessage { id: 1 }).unwrap();
+            osc_client.send(osc::NoBodyMessage { id: 2 }).unwrap();
+            osc_client.send(osc::NoBodyMessage { id: 3 }).unwrap();
+            osc_client.send(osc::NoBodyMessage { id: 4 }).unwrap();
             continue;
         }
         let skeleton: k4a::Skeleton = frame

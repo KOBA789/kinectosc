@@ -48,7 +48,7 @@ impl Message for PoseMessage {
     {
         let mut len = 0;
         len += w.write_string("/Tracker/Pose")?;
-        len += w.write_string(",iidddddddddddddd")?;
+        len += w.write_string(",iiddddddddddddddddd")?;
 
         len += w.write_int(self.id as i32)?;
         len += w.write_int(if self.is_valid { 1 } else { 0 })?;
@@ -74,6 +74,22 @@ impl Message for PoseMessage {
         len += w.write_double(self.velocity.x)?;
         len += w.write_double(self.velocity.y)?;
         len += w.write_double(self.velocity.z)?;
+
+        Ok(len)
+    }
+}
+
+pub struct NoBodyMessage {
+    pub id: u32,
+}
+
+impl Message for NoBodyMessage {
+    fn encode<W: Write>(&self, mut w: OscPadWriter<W>) -> io::Result<usize> {
+        let mut len = 0;
+        len += w.write_string("/Tracker/NoBody")?;
+        len += w.write_string(",i")?;
+
+        len += w.write_int(self.id as i32)?;
 
         Ok(len)
     }
